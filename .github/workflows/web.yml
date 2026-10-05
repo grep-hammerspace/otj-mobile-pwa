@@ -72,9 +72,11 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       # CLI deploys don't get the Git integration's branch URL, so the preview gets a fixed name.
+      # --scope is required: without it the alias is looked up on the token owner's personal
+      # account and fails with "User not found".
       - name: Alias preview
         if: env.TARGET == 'preview'
-        run: vercel alias set "${{ steps.deploy.outputs.url }}" "$PREVIEW_ALIAS" --token="$VERCEL_TOKEN"
+        run: vercel alias set "${{ steps.deploy.outputs.url }}" "$PREVIEW_ALIAS" --scope="$VERCEL_ORG_ID" --token="$VERCEL_TOKEN"
 
       - name: Summary
         run: |
