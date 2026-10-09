@@ -31,7 +31,7 @@ lib/session.ts    token storage + a 401 handler registry. React-free on purpose.
 lib/auth.tsx      AuthProvider / useAuth — the single source of truth for signed-in state.
 lib/server.ts     which backend: the built-in URL or a self-hosted one. React-free.
 lib/api.ts        fetch wrapper: base URL, Bearer injection, ApiError / NetworkError,
-                  clears the token and notifies the provider on 401.
+                  clears the token and notifies the provider on the auth filter's 401.
 lib/auth-api.ts   signup / login / logout against the backend's /auth endpoints.
 app/_layout.tsx   AuthProvider + Stack.Protected guards.
 app/signup.tsx    invite-gated account creation.
@@ -48,6 +48,13 @@ Three things worth not re-litigating:
   to signup. If you find yourself adding a second `useState` for the token, stop.
 - **Nothing navigates by hand after sign-in/sign-out.** The `Stack.Protected` guards in
   `_layout.tsx` do it. A screen that also called `router.replace` would race them.
+- **Only the auth filter's 401 signs out.** `api()` checks for `code: "invalid_token"` (or, from a
+  backend older than that tag, the filter's message). Prepare used to answer a failed OneAdvanced
+  login with a 401 too, and signing out on any 401 turned a mistyped OneAdvanced password into
+  being booted to signup. Don't widen it back to every 401.
+- **Sign out takes two taps.** The button sits just above the tab bar, and a one-tap sign-out
+  there was the other half of "randomly booted". The confirmation is inline, not `Alert.alert`,
+  which react-native-web implements as a no-op.
 
 Signup is **invite-gated**: codes are minted through the backend's admin API, which is
 tailnet-only. There is no self-serve signup and no client-side way to get a code.
@@ -182,8 +189,9 @@ fields `oneAdvancedUsername` / `oneAdvancedPassword`; what shipped is
 until it was checked against `staging`. That mistake is invisible from the client side — Jackson
 drops unknown keys, so both fields arrive null and the call comes back 400 "credentials missing",
 which looks exactly like a wrong OneAdvanced password. Two other outcomes are worth knowing before
-reading a failure as a bug: a failed login is **401** with a deliberately generic message (the
-driver's own text leaks the username through `login_hint` URLs), and an account with no learner ID
+reading a failure as a bug: a failed login is **422** with a deliberately generic message (the
+driver's own text leaks the username through `login_hint` URLs), or **502** when the login broke
+for some other reason than the credentials, and an account with no learner ID
 is **409**, checked before the login so the Azure route cannot make someone approve a push and wait
 two minutes for nothing.
 

@@ -84,12 +84,13 @@ async function postSealed<T>(path: string, creds: OaCredentials): Promise<T> {
  * <p>Returns as soon as the push is out — the server then polls Microsoft in the background, which
  * is what `completeAzure` waits on.
  *
- * <p>Two failures share this shape with `prepareBrowser`, and neither is the driver's own message:
- * a login that fails is **401** with a deliberately generic one, because the driver's text embeds
- * login-chain URLs that carry the username in `login_hint`; an account with no learner ID is
- * **409**, checked before the login precisely so this route does not make the user approve a push
- * and wait two minutes only to find there is nothing to post under. Both arrive as an `ApiError`
- * whose message is worth showing verbatim.
+ * <p>Three failures share this shape with `prepareBrowser`, and none is the driver's own message:
+ * a login that fails is **422** with a deliberately generic one, because the driver's text embeds
+ * login-chain URLs that carry the username in `login_hint`; one that broke for any other reason
+ * (network, a page the driver could not read) is **502** "try again"; an account with no learner
+ * ID is **409**, checked before the login precisely so this route does not make the user approve a
+ * push and wait two minutes only to find there is nothing to post under. All arrive as an
+ * `ApiError` whose message is worth showing verbatim.
  * Against the hosted backend, `sealCredentials` can also throw a `KeyTrustError`, before anything
  * is sent.
  */
@@ -129,7 +130,7 @@ export async function completeAzure(attempts = 3): Promise<SubmitOutcome> {
  * <p>Answers `{"status": "otp_required"}`, which carries no information the caller does not already
  * have, so the return is `void`: reaching here without throwing *is* the result. The code the user
  * is about to type expires in about 30 s, so the field wants to be on screen the moment this
- * resolves. The 401 and 409 described on `prepareAzure` apply here too.
+ * resolves. The 422, 502 and 409 described on `prepareAzure` apply here too.
  */
 export async function prepareBrowser(creds: OaCredentials): Promise<void> {
   await postCredentials<{ status: string }>("/otj-services/prepare-browser", creds);

@@ -15,6 +15,7 @@ import { useAuth } from "../../lib/auth";
 export default function Log() {
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
+  const [confirmingSignOut, setConfirmingSignOut] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [lastResult, setLastResult] = useState<LogActivitiesResponse | null>(null);
 
@@ -45,14 +46,47 @@ export default function Log() {
         <LastResult result={lastResult} />
       </ScrollView>
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={onSignOut}
-        disabled={signingOut}
-        style={({ pressed }) => [styles.signOut, pressed ? styles.signOutPressed : null]}
-      >
-        <Text style={styles.signOutText}>{signingOut ? "Signing out…" : "Sign out"}</Text>
-      </Pressable>
+      {/* Two taps, asked in place. It sits just above the tab bar, so a thumb reaching for "Log"
+          could sign someone out in one — which beta users reported as being booted at random.
+          In place rather than `Alert.alert`, which react-native-web implements as a no-op. */}
+      {confirmingSignOut ? (
+        <View style={styles.confirm}>
+          <Text style={styles.confirmText}>Sign out of OTJ Log?</Text>
+          <View style={styles.confirmRow}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setConfirmingSignOut(false)}
+              disabled={signingOut}
+              style={({ pressed }) => [styles.confirmButton, pressed ? styles.signOutPressed : null]}
+            >
+              <Text style={styles.confirmCancelText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: signingOut, busy: signingOut }}
+              onPress={onSignOut}
+              disabled={signingOut}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                styles.confirmSignOut,
+                pressed ? styles.signOutPressed : null,
+              ]}
+            >
+              <Text style={styles.confirmSignOutText}>
+                {signingOut ? "Signing out…" : "Sign out"}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setConfirmingSignOut(true)}
+          style={({ pressed }) => [styles.signOut, pressed ? styles.signOutPressed : null]}
+        >
+          <Text style={styles.signOutText}>Sign out</Text>
+        </Pressable>
+      )}
 
       <ActivityComposer
         visible={composerOpen}
@@ -149,5 +183,47 @@ const styles = StyleSheet.create({
     color: "#dc2626",
     fontSize: 15,
     fontWeight: "600",
+  },
+  confirm: {
+    gap: 10,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 14,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  confirmText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#111827",
+    textAlign: "center",
+  },
+  confirmRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  /** 44pt minimum, the same floor as every other button in the app. */
+  confirmButton: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 10,
+  },
+  confirmSignOut: {
+    borderColor: "#dc2626",
+    backgroundColor: "#dc2626",
+  },
+  confirmCancelText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  confirmSignOutText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#ffffff",
   },
 });

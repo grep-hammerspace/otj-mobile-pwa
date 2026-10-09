@@ -32,7 +32,7 @@ export function setUnauthorizedHandler(fn: UnauthorizedHandler | null): void {
 }
 
 /**
- * Called by `api()` on any 401. Without this, clearing the stored token left every mounted
+ * Called by `api()` when the server rejects the session token. Without this, clearing the stored token left every mounted
  * `useAuth()` holding a stale value, so an expired session kept rendering the signed-in UI until
  * the app was restarted.
  */
