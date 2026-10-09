@@ -346,6 +346,10 @@ vercel.json                        static export settings, headers, Git deploys 
   password from a form's submit event, and a `Pressable` never fires one. So buttons call
   `form.submit()`, which is `requestSubmit()` on web, and never `onSubmit` directly. The form is
   `display: contents` so it doesn't change the layout.
+- **Two login forms share one origin, and a password manager keys on origin + username.** The app's
+  sign-in and the OneAdvanced sheet look identical to it, so if the two usernames match, saving one
+  password overwrites the other. Signup's username hint asks for a different name; that is the whole
+  fix. `autocomplete="section-*"` does not separate saved entries, so don't reach for it.
 - **`viewport-fit=cover` in `+html.tsx` is load-bearing.** Without it an installed iPhone app reports
   every safe-area inset as 0, and the sheets' close buttons go under the clock.
 - **No service worker.** Every screen is a live API call, so offline has nothing to offer, and a
