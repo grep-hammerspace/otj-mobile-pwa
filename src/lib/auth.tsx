@@ -37,7 +37,7 @@ const AuthContext = createContext<AuthValue | null>(null);
  * <p>This used to be a bare `useState` inside a hook, which meant every caller got its own copy:
  * the root layout's guard could not see a sign-in that happened on the signup screen, and nothing
  * saw `api()` discarding a rejected token. One provider, one state, and a handler registered with
- * `session.ts` so a 401 anywhere signs out everywhere.
+ * `session.ts` so a rejected session token anywhere signs out everywhere.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();

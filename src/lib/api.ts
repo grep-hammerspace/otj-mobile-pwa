@@ -40,11 +40,37 @@ export async function api(path: string, init: RequestInit = {}): Promise<Respons
     throw new NetworkError(e);
   }
 
-  if (res.status === 401) {
+  if (res.status === 401 && isSessionRejected(await res.clone().text())) {
     await clearToken();
     notifyUnauthorized();
   }
   return res;
+}
+
+/**
+ * Whether a 401 is the server saying *this app's* session is dead — the only 401 worth signing out
+ * on.
+ *
+ * <p>Not every 401 was. The prepare endpoints used to answer a failed OneAdvanced login with one, so
+ * a mistyped OneAdvanced password, or OneAdvanced having a bad moment, threw away a perfectly good
+ * OTJ session and dropped the user on signup. The backend's auth filter now tags its 401 with
+ * `code: "invalid_token"`; the message match covers a backend from before that tag, whose filter
+ * sent the same text without it.
+ */
+function isSessionRejected(body: string): boolean {
+  return (
+    errorCode(body) === "invalid_token" ||
+    errorField(body) === "Missing or invalid bearer token"
+  );
+}
+
+function errorField(body: string): string | undefined {
+  try {
+    const parsed = JSON.parse(body);
+    return typeof parsed?.error === "string" ? parsed.error : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**

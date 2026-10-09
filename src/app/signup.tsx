@@ -144,6 +144,10 @@ export default function Signup() {
             value={username}
             onChangeText={setUsername}
             error={errors.username}
+            // Password managers file a login under site + username, and the OneAdvanced sheet on
+            // Submit is a second login form on this same site. A username that matches the
+            // OneAdvanced one means saving either password overwrites the other.
+            hint="Pick something other than your university email or OneAdvanced username, so your browser can save both passwords separately."
             autoCapitalize="none"
             autoCorrect={false}
             // `username-new` is Android's hint for a new account; browsers know only `username`.

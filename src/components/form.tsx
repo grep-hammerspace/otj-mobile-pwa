@@ -18,10 +18,12 @@ type FieldProps = TextInputProps & {
   label: string;
   /** Shown under the input in red; also marks the input itself as invalid. */
   error?: string;
+  /** Shown under the input in grey while there is no error — the error replaces it. */
+  hint?: string;
 };
 
 export const Field = forwardRef<TextInput, FieldProps>(function Field(
-  { label, error, style, ...inputProps },
+  { label, error, hint, style, ...inputProps },
   ref,
 ) {
   return (
@@ -33,7 +35,11 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
         placeholderTextColor="#9ca3af"
         {...inputProps}
       />
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
+      {error ? (
+        <Text style={styles.fieldError}>{error}</Text>
+      ) : hint ? (
+        <Text style={styles.fieldHint}>{hint}</Text>
+      ) : null}
     </View>
   );
 });
@@ -124,6 +130,12 @@ export const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 13,
     color: "#dc2626",
+  },
+  fieldHint: {
+    marginTop: 6,
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#6b7280",
   },
   button: {
     marginTop: 8,
